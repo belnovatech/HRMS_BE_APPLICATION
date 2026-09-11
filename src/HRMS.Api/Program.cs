@@ -62,8 +62,8 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy => policy
     .AllowAnyMethod()));
 builder.Services.AddInfrastructure();
 
-// ✅ Connection string fix
-string connectionString = builder.Configuration.GetConnectionString("Database");
+// ✅ Connection string fix with nullability
+string? connectionString = builder.Configuration.GetConnectionString("Database");
 
 // If Render injects DATABASE_URL in URI format, convert it
 string? databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
