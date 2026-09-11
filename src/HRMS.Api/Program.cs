@@ -61,8 +61,23 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy => policy
     .AllowAnyHeader()
     .AllowAnyMethod()));
 builder.Services.AddInfrastructure();
-string connectionString = builder.Configuration.GetConnectionString("Database")
-    ?? throw new InvalidOperationException("Connection string 'Database' is required.");
+
+// ✅ Connection string fix
+string connectionString = builder.Configuration.GetConnectionString("Database");
+
+// If Render injects DATABASE_URL in URI format, convert it
+string? databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+if (!string.IsNullOrEmpty(databaseUrl))
+{
+    var uri = new Uri(databaseUrl);
+    var userInfo = uri.UserInfo.Split(':');
+    connectionString =
+        $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]}";
+}
+
+if (string.IsNullOrEmpty(connectionString))
+    throw new InvalidOperationException("Connection string 'Database' is required.");
+
 builder.Services.AddDbContext<HrmsDbContext>(options => options.UseNpgsql(connectionString));
 builder.Services.AddScoped<HrmsStore>();
 builder.Services.AddScoped<EfEmployeeRepository>();
