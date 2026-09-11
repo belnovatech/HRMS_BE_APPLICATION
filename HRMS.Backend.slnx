@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/HRMS.Api/HRMS.Api.csproj" />
+    <Project Path="src/HRMS.Application/HRMS.Application.csproj" />
+    <Project Path="src/HRMS.Domain/HRMS.Domain.csproj" />
+    <Project Path="src/HRMS.Infrastructure/HRMS.Infrastructure.csproj" />
+    <Project Path="tests/HRMS.Api.IntegrationTests/HRMS.Api.IntegrationTests.csproj" />
+    <Project Path="tests/HRMS.Application.UnitTests/HRMS.Application.UnitTests.csproj" />
+    <Project Path="tests/HRMS.ArchitectureTests/HRMS.ArchitectureTests.csproj" />
+    <Project Path="tests/HRMS.Domain.UnitTests/HRMS.Domain.UnitTests.csproj" />
+  </Folder>
+</Solution>
