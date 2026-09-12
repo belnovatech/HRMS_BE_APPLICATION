@@ -11,6 +11,8 @@ services:
         value: Production
       - key: ASPNETCORE_HTTP_PORTS
         value: "10000"
+      - key: Swagger__Enabled
+        value: "true"
       - key: ConnectionStrings__Database
         fromDatabase:
           name: belnova-hrms-db
