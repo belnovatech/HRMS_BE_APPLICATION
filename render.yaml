@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: belnova-hrms-api
+    runtime: docker
+    plan: free
+    region: singapore
+    healthCheckPath: /health/ready
+    autoDeployTrigger: commit
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_HTTP_PORTS
+        value: "10000"
+      - key: ConnectionStrings__Database
+        fromDatabase:
+          name: belnova-hrms-db
+          property: connectionString
+
+databases:
+  - name: belnova-hrms-db
+    databaseName: hrms
+    user: hrms
+    plan: free
+    region: singapore

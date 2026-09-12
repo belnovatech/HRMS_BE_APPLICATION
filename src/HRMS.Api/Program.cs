@@ -8,6 +8,7 @@ using HRMS.Infrastructure;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -61,23 +62,22 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy => policy
     .AllowAnyHeader()
     .AllowAnyMethod()));
 builder.Services.AddInfrastructure();
-
 // ✅ Connection string fix with nullability
 string? connectionString = builder.Configuration.GetConnectionString("Database");
 
 // If Render injects DATABASE_URL in URI format, convert it
 string? databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-if (!string.IsNullOrEmpty(databaseUrl))
+if (!string.IsNullOrWhiteSpace(databaseUrl))
 {
-    var uri = new Uri(databaseUrl);
-    var userInfo = uri.UserInfo.Split(':');
-    connectionString =
-        $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]}";
+    connectionString = databaseUrl;
 }
 
-if (string.IsNullOrEmpty(connectionString))
+if (string.IsNullOrWhiteSpace(connectionString))
+{
     throw new InvalidOperationException("Connection string 'Database' is required.");
+}
 
+connectionString = NormalizePostgresConnectionString(connectionString);
 builder.Services.AddDbContext<HrmsDbContext>(options => options.UseNpgsql(connectionString));
 builder.Services.AddScoped<HrmsStore>();
 builder.Services.AddScoped<EfEmployeeRepository>();
@@ -120,5 +120,30 @@ app.MapHealthChecks("/health/ready", new()
 app.MapControllers();
 
 app.Run();
+
+static string NormalizePostgresConnectionString(string connectionString)
+{
+    if (!connectionString.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) &&
+        !connectionString.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+    {
+        return connectionString;
+    }
+
+    var uri = new Uri(connectionString);
+    string[] credentials = uri.UserInfo.Split(':', 2);
+    if (credentials.Length != 2 || string.IsNullOrWhiteSpace(uri.AbsolutePath.Trim('/')))
+    {
+        throw new InvalidOperationException("The PostgreSQL connection URL is invalid.");
+    }
+
+    return new NpgsqlConnectionStringBuilder
+    {
+        Host = uri.Host,
+        Port = uri.IsDefaultPort ? 5432 : uri.Port,
+        Database = Uri.UnescapeDataString(uri.AbsolutePath.Trim('/')),
+        Username = Uri.UnescapeDataString(credentials[0]),
+        Password = Uri.UnescapeDataString(credentials[1])
+    }.ConnectionString;
+}
 
 public partial class Program;
